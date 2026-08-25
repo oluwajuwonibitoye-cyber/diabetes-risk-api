@@ -27,25 +27,19 @@ def verify_api_key(header_value: str = Security(api_key_header)):
 
 @app.post("/predict")
 def predict_risk(data: PatientData, token: str = Security(verify_api_key)):
-    # 2. Risk Calculation Math Logic
+    # Math calculation logic
     score = 0.0
-    if data.glucose_level > 125: 
-        score += 0.4
-    elif data.glucose_level > 100: 
-        score += 0.2
+    if data.glucose_level > 125: score += 0.4
+    elif data.glucose_level > 100: score += 0.2
     
-    if data.bmi > 25: 
-        score += 0.3
-    if data.age > 45: 
-        score += 0.2
-    if data.family_history == 1: 
-        score += 0.1
-    if data.high_blood_pressure == 1: 
-        score += 0.1
+    if data.bmi > 25: score += 0.3
+    if data.age > 45: score += 0.2
+    if data.family_history == 1: score += 0.1
+    if data.high_blood_pressure == 1: score += 0.1
     
     score = min(score, 1.0)
     
-    # 3. Dynamic Mapping to match your n8n HTML template variables perfectly
+    # 2. Map out the exact text risk bands and action lists your n8n fields expect
     if score >= 0.7:
         risk_band_label = "High Risk"
         risk_signal = "🔴 High Priority Review Needed"
@@ -56,7 +50,7 @@ def predict_risk(data: PatientData, token: str = Security(verify_api_key)):
         ]
     elif score >= 0.4:
         risk_band_label = "Moderate Risk"
-        risk_signal = "季 Moderate Monitoring"
+        risk_signal = "🟡 Moderate Monitoring"
         action_plan = [
             "Schedule standard clinical consultation follow-up",
             "Discuss preventative dietary changes"
@@ -69,10 +63,10 @@ def predict_risk(data: PatientData, token: str = Security(verify_api_key)):
             "Rescreen routinely at next annual checkup"
         ]
         
-    # 4. Return properties looking exactly like your layout expressions
+    # 3. Return the exact JSON structure your n8n workflow expressions use
     return {
-        "diabetes_risk": round(score * 100, 1),  # Multiplied by 100 to feed into {{ ... }}% raw
-        "risk_band_label": risk_band_label,
-        "risk_signal": risk_signal,
-        "action_plan": action_plan
+        "diabetes_risk": round(score * 100, 1), # e.g., 70.0%
+        "risk_band_label": risk_band_label,      # e.g., "High Risk"
+        "risk_signal": risk_signal,              # e.g., "🔴 High Priority Review Needed"
+        "action_plan": action_plan               # Array of strings
     }
